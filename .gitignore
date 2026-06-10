@@ -1,0 +1,18 @@
+# Raw microdata — never commit (TURKSTAT restricted)
+*.xlsx
+TCA2022*
+
+# Individual-level derived objects — never commit (contain person-level records)
+analitik_orneklem*.rds
+mca_birey_koord.csv
+mca_sonuc.rds
+model_fiziksel.rds
+model_psikolojik.rds
+model_genel.rds
+shap_figure3.rds
+
+# R session files
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
