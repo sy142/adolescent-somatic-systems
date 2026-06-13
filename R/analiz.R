@@ -24,6 +24,9 @@ library(qgraph)
 
 rm(list=ls())
 
+select <- dplyr::select   
+filter <- dplyr::filter
+
 veri_yolu <- "C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/TCA2022_turetilmis_veriseti.xlsx"
 df <- read_excel(veri_yolu)
 
@@ -45,7 +48,7 @@ analitik_degiskenler <- c(
   "CINSIYET", "YAS_YIL"
 )
 
-dat <- df %>% select(all_of(analitik_degiskenler))
+dat <- df %>% dplyr::select(all_of(analitik_degiskenler))
 
 n_toplam <- nrow(dat)
 cat("Toplam orneklem N =", n_toplam, "\n\n")
@@ -99,7 +102,7 @@ print(as.data.frame(secim_tablo_medyan))
 cat("\n")
 
 mcar_veri <- dat %>%
-  select(all_of(analitik_degiskenler)) %>%
+  dplyr::select(all_of(analitik_degiskenler)) %>%
   mutate(across(where(is.factor), ~ as.integer(.)))
 
 mcar_sonuc <- mcar_test(mcar_veri)
@@ -111,13 +114,13 @@ cat("Eksik veri deseni sayisi =", mcar_sonuc$missing.patterns, "\n\n")
 
 cat("Eksik veri deseni ozeti (ilk satirlar)\n")
 desen_ozet <- dat %>%
-  select(all_of(analitik_degiskenler)) %>%
+  dplyr::select(all_of(analitik_degiskenler)) %>%
   miss_var_summary()
 print(as.data.frame(desen_ozet), row.names = FALSE)
 
 
 analitik_orneklem <- df %>%
-  filter(complete.cases(df %>% select(all_of(analitik_degiskenler))))
+  filter(complete.cases(df %>% dplyr::select(all_of(analitik_degiskenler))))
 
 cat("Analitik orneklem sabitlendi\n")
 cat("N (analitik) =", nrow(analitik_orneklem), "\n")
@@ -1624,7 +1627,50 @@ saveRDS(model_genel, "C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/Dat
 cat("Uc model Datalar klasorune kaydedildi.\n")
 
 
-yordayicilar <- "zorbalik_maruziyet + school_alienation + parental_support + z_bmi + z_saglikli + z_sagliksiz + z_aktivite + z_gelir + z_konut + YAS_YIL + CINSIYET + kronik_hastalik + spor_etkinlik"
+analitik_orneklem <- analitik_orneklem %>%
+  mutate(
+    z_zorba  = scale(zorbalik_maruziyet)[, 1],
+    z_alien  = scale(school_alienation)[, 1],
+    z_parent = scale(parental_support)[, 1],
+    z_yas    = scale(YAS_YIL)[, 1]
+  )
+
+svy_tasarim <- svydesign(ids = ~1, weights = ~agirlik, data = analitik_orneklem)
+
+
+analitik_orneklem <- analitik_orneklem %>%
+  mutate(
+    CINSIYET = factor(CINSIYET, levels = c("Erkek","Kadin")),
+    spor_etkinlik = factor(spor_etkinlik, levels = c(0,1)),
+    kronik_hastalik = factor(kronik_hastalik, levels = c(0,1)),
+    fiz_kat = ordered(case_when(
+      somatik_fiziksel == 0 ~ "Low",
+      somatik_fiziksel > 0 & somatik_fiziksel <= 0.75 ~ "Moderate",
+      somatik_fiziksel > 0.75 ~ "High"), levels = c("Low","Moderate","High")),
+    psi_kat = ordered(case_when(
+      somatik_psikolojik == 0 ~ "Low",
+      somatik_psikolojik > 0 & somatik_psikolojik <= 1.0 ~ "Moderate",
+      somatik_psikolojik > 1.0 ~ "High"), levels = c("Low","Moderate","High")),
+    z_zorba  = scale(zorbalik_maruziyet)[, 1],
+    z_alien  = scale(school_alienation)[, 1],
+    z_parent = scale(parental_support)[, 1],
+    z_yas    = scale(YAS_YIL)[, 1],
+    z_bmi       = scale(BMI_z)[,1],
+    z_saglikli  = scale(saglikli_beslenme)[,1],
+    z_sagliksiz = scale(sagliksiz_beslenme)[,1],
+    z_aktivite  = scale(fiziksel_aktivite_gun)[,1],
+    z_gelir     = scale(gelir_ordinal)[,1],
+    z_konut     = scale(konut_sorunu)[,1]
+  )
+
+svy_tasarim <- svydesign(ids = ~1, weights = ~agirlik, data = analitik_orneklem)
+
+cat("Kontrol — fiz_kat:\n"); print(table(analitik_orneklem$fiz_kat))
+cat("Kontrol — psi_kat:\n"); print(table(analitik_orneklem$psi_kat))
+
+
+
+yordayicilar <- "z_zorba + z_alien + z_parent + z_bmi + z_saglikli + z_sagliksiz + z_aktivite + z_gelir + z_konut + z_yas + CINSIYET + kronik_hastalik + spor_etkinlik"
 
 cat("=== PROPORTIONAL ODDS VARSAYIMI KONTROLU (survey-uyumlu, Harrell yaklasimi) ===\n")
 cat("Her sonuc icin iki ikili esik: (>=Moderate) ve (=High)\n")
@@ -1665,7 +1711,7 @@ cat("Buyuk ve tutarli isaret degisiklikleri varsa varsayim sorunlu olabilir.\n")
 cat("=== DUYARLILIK 1: PSIKOSOSYAL EKSEN (MCA Dim1) KOMPOZIT MODEL ===\n")
 cat("Uc psikososyal degisken yerine tek MCA adversite skoru\n\n")
 
-yordayici_kompozit <- "psikososyal_eksen + z_bmi + z_saglikli + z_sagliksiz + z_aktivite + z_gelir + z_konut + YAS_YIL + CINSIYET + kronik_hastalik + spor_etkinlik"
+yordayici_kompozit <- "psikososyal_eksen + z_bmi + z_saglikli + z_sagliksiz + z_aktivite + z_gelir + z_konut + z_yas + CINSIYET + kronik_hastalik + spor_etkinlik"
 
 model_fiz_komp <- svyolr(as.formula(paste("fiz_kat ~", yordayici_kompozit)), design = svy_tasarim)
 model_psi_komp <- svyolr(as.formula(paste("psi_kat ~", yordayici_kompozit)), design = svy_tasarim)
@@ -1724,10 +1770,22 @@ print(round(bmi_grid[, c("BMI_z","tahmin_fiz")], 3))
 
 z_to_p <- function(z) round(2 * pnorm(-abs(z)), 3)
 
+model_fiz <- svyolr(as.formula(paste("fiz_kat ~", yordayicilar)), design = svy_tasarim)
+model_psi <- svyolr(as.formula(paste("psi_kat ~", yordayicilar)), design = svy_tasarim)
+
 cat("FIZIKSEL model p-degerleri:\n")
 print(z_to_p(summary(model_fiz)$coefficients[,"t value"]))
 cat("\nPSIKOLOJIK model p-degerleri:\n")
 print(z_to_p(summary(model_psi)$coefficients[,"t value"]))
+
+cat("=== VIF KONTROL (standardize yordayicilar) ===\n")
+vif_model <- lm(as.formula(paste("somatik_genel ~", yordayicilar)), data = analitik_orneklem)
+vif_deger <- car::vif(vif_model)
+print(round(vif_deger, 3))
+cat("\nEn yuksek VIF =", round(max(vif_deger), 3), "\n")
+cat("1.2'nin altinda mi:", all(vif_deger < 1.2), "\n")
+cat("1.5'in altinda mi:", all(vif_deger < 1.5), "\n")
+
 
 
 # Machine Learning
