@@ -234,12 +234,12 @@ dat <- data.frame(
   block     = rep(blocks, times = 2),
   predictor = rep(preds, times = 2),
   model     = rep(c("Physical somatic burden", "Psychological somatic burden"), each = 13),
-  or = c(2.364, 1.199, 1.002, 0.958, 0.842, 1.004, 1.061, 1.612, 1.421, 0.988, 1.054, 1.182, 2.351,
-         4.344, 1.297, 0.806, 0.988, 0.860, 1.041, 1.114, 1.374, 1.573, 1.044, 0.968, 1.145, 1.820),
-  lo = c(1.772, 1.066, 0.886, 0.895, 0.784, 0.938, 0.991, 1.278, 1.201, 0.923, 0.980, 1.127, 2.041,
-         3.115, 1.144, 0.707, 0.922, 0.804, 0.973, 1.041, 1.085, 1.333, 0.975, 0.902, 1.091, 1.584),
-  hi = c(3.154, 1.348, 1.134, 1.025, 0.904, 1.075, 1.136, 2.034, 1.681, 1.059, 1.133, 1.240, 2.707,
-         6.057, 1.469, 0.920, 1.060, 0.920, 1.114, 1.192, 1.739, 1.857, 1.119, 1.040, 1.201, 2.091)
+  or = c(1.429, 1.121, 1.001, 0.958, 0.842, 1.004, 1.061, 1.612, 1.421, 0.988, 1.054, 1.259, 2.351,
+         1.840, 1.177, 0.883, 0.988, 0.860, 1.041, 1.114, 1.374, 1.573, 1.044, 0.968, 1.205, 1.820),
+  lo = c(1.268, 1.041, 0.933, 0.895, 0.784, 0.938, 0.991, 1.278, 1.201, 0.923, 0.980, 1.180, 2.041,
+         1.603, 1.088, 0.819, 0.922, 0.804, 0.973, 1.041, 1.085, 1.333, 0.975, 0.902, 1.127, 1.584),
+  hi = c(1.611, 1.207, 1.075, 1.025, 0.904, 1.075, 1.136, 2.034, 1.681, 1.059, 1.133, 1.345, 2.707,
+         2.112, 1.273, 0.953, 1.060, 0.920, 1.114, 1.192, 1.739, 1.857, 1.119, 1.040, 1.287, 2.091)
 )
 
 dat$block     <- factor(dat$block, levels = unique(blocks))
@@ -255,7 +255,7 @@ dat$line_col <- ifelse(dat$sig,
                        unname(bright[as.character(dat$model)]),
                        unname(matte[as.character(dat$model)]))
 dat$lab      <- sprintf("%.2f (%.2f\u2013%.2f)", dat$or, dat$lo, dat$hi)
-dat$xlab     <- ifelse(dat$model == "Physical somatic burden", 9, 20)
+dat$xlab     <- ifelse(dat$model == "Physical somatic burden", 3.45, 5.35)
 dat$lab_col  <- ifelse(dat$sig,
                        unname(bright[as.character(dat$model)]),
                        unname(txtmat[as.character(dat$model)]))
@@ -294,20 +294,20 @@ brc <- do.call(rbind, lapply(seq_along(blk_n), function(i) {
 brc$block <- factor(brc$block, levels = blk_lev)
 
 blab <- data.frame(block = factor(blk_lev, levels = blk_lev),
-                   x = 0.205,
+                   x = 0.230,
                    y = (blk_n + 1) / 2,
                    lab = c("Psychosocial\nmicrosystems", "Lifestyle and health",
                            "Socioeconomic\ncontext", "Sociodemographic"),
                    col = accent)
 
 hdr1 <- data.frame(block = factor(rep(blk_lev[1], 2), levels = blk_lev),
-                   x = c(9, 20), lab = c("Physical", "Psychological"),
+                   x = c(3.45, 5.35), lab = c("Physical", "Psychological"),
                    col = c("#2E5E8C", "#C1432E"))
 hdr2 <- data.frame(block = factor(rep(blk_lev[1], 2), levels = blk_lev),
-                   x = c(9, 20), lab = rep("OR (95% CI)", 2), col = rep("grey40", 2))
+                   x = c(3.45, 5.35), lab = rep("OR (95% CI)", 2), col = rep("grey40", 2))
 
 dirlab <- data.frame(block = factor(rep(blk_lev[1], 2), levels = blk_lev),
-                     x = c(0.78, 2.6),
+                     x = c(0.80, 1.85),
                      lab = c("\u2190 lower burden", "higher burden \u2192"))
 
 dodge <- position_dodge(width = 0.65)
@@ -338,10 +338,10 @@ p <- ggplot(dat, aes(x = or, y = predictor, group = model)) +
              size = 2.7, stroke = 0.6) +
   scale_color_identity(guide = "none") +
   scale_fill_identity(guide = "none") +
-  scale_x_log10(breaks = c(0.7, 1, 1.5, 2, 3, 4, 6),
-                labels = c("0.7", "1", "1.5", "2", "3", "4", "6")) +
+  scale_x_log10(breaks = c(0.7, 1, 1.5, 2, 2.5),
+                labels = c("0.7", "1", "1.5", "2", "2.5")) +
   facet_grid(block ~ ., scales = "free_y", space = "free_y") +
-  coord_cartesian(xlim = c(0.65, 36), clip = "off") +
+  coord_cartesian(xlim = c(0.65, 6.5), clip = "off") +
   labs(x = "Odds ratio (log scale)", y = NULL) +
   theme_minimal(base_family = "serif", base_size = 11) +
   theme(
@@ -359,7 +359,7 @@ p <- ggplot(dat, aes(x = or, y = predictor, group = model)) +
     panel.spacing.y = unit(1.1, "lines"),
     legend.position = "none",
     panel.border = element_blank(),
-    plot.margin  = margin(34, 12, 8, 160)
+    plot.margin  = margin(34, 12, 8, 210)
   )
 
 out_dir <- "C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/Datalar/"
