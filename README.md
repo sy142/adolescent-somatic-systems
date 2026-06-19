@@ -1,7 +1,7 @@
-# Adolescent Somatic Symptoms as System-Level Signals: Evidence from Türkiye
+# Adolescent Somatic Symptoms Under Psychosocial Adversity: Differential Links of Risk and Protective Factors to Physical and Psychological Burden in Türkiye
 
 This repository contains the analysis code and aggregate outputs for the study
-"Adolescent Somatic Symptoms as System-Level Signals: Evidence from Türkiye."
+"Adolescent Somatic Symptoms Under Psychosocial Adversity: Differential Links of Risk and Protective Factors to Physical and Psychological Burden in Türkiye."
 
 ## Overview
 
@@ -46,7 +46,7 @@ individual-level data.
 ## Citation
 
 Azim, D., Kara, S. B., Güvey, M. E., Aydemir, E., Gündem, S., & Yılmaz, S. (2026).
-Adolescent Somatic Symptoms as System-Level Signals: Evidence from Türkiye.
+Adolescent Somatic Symptoms Under Psychosocial Adversity: Differential Links of Risk and Protective Factors to Physical and Psychological Burden in Türkiye.
 [Journal]. [DOI when available]
 
 ## License
