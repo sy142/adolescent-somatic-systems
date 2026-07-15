@@ -983,3 +983,55 @@ if (!is.null(fit_bif_w)) {
   }
   
 }
+
+cat("\n===== PART 13R: BIFACTOR RE-ESTIMATED UNWEIGHTED (to match other CFAs) =====\n\n")
+
+fit_1f_uw <- cfa(model_1f, data = mv, ordered = somatik_maddeler, estimator = "WLSMV", parameterization = "delta", std.lv = TRUE)
+fit_2f_uw <- cfa(model_2f, data = mv, ordered = somatik_maddeler, estimator = "WLSMV", parameterization = "delta", std.lv = TRUE)
+fit_bif_uw <- cfa(model_bif, data = mv, ordered = somatik_maddeler, estimator = "WLSMV", parameterization = "delta", std.lv = TRUE, orthogonal = TRUE)
+
+cat("Bifactor (unweighted) converged:", lavInspect(fit_bif_uw, "converged"), "\n")
+cat("Heywood case:", any(diag(lavInspect(fit_bif_uw, "theta")) < 0), "\n\n")
+
+fm <- c("chisq.scaled", "df", "cfi.scaled", "tli.scaled", "rmsea.scaled", "rmsea.ci.lower.scaled", "rmsea.ci.upper.scaled", "srmr")
+
+uw_tab <- rbind(OneFactor = round(fitMeasures(fit_1f_uw, fm), 4), TwoFactor = round(fitMeasures(fit_2f_uw, fm), 4), Bifactor = round(fitMeasures(fit_bif_uw, fm), 4))
+cat("UNWEIGHTED model fit (for Table 2 and Table S7 Panels A):\n")
+print(uw_tab)
+
+cat("\n----- Unweighted bifactor loadings -----\n")
+sb <- standardizedSolution(fit_bif_uw)
+lam <- sb[sb$op == "=~", c("lhs", "rhs", "est.std", "pvalue")]
+ord <- c(somatik_fiziksel_maddeler, somatik_psikolojik_maddeler)
+lam_g <- sb[sb$op=="=~" & sb$lhs=="g", ]
+lam_fiz <- sb[sb$op=="=~" & sb$lhs=="fiz_s", ]
+lam_psi <- sb[sb$op=="=~" & sb$lhs=="psi_s", ]
+lg <- lam_g$est.std[match(ord, lam_g$rhs)]
+gp <- lam_g$pvalue[match(ord, lam_g$rhs)]
+ls <- c(lam_fiz$est.std[match(somatik_fiziksel_maddeler, lam_fiz$rhs)], lam_psi$est.std[match(somatik_psikolojik_maddeler, lam_psi$rhs)])
+sp <- c(lam_fiz$pvalue[match(somatik_fiziksel_maddeler, lam_fiz$rhs)], lam_psi$pvalue[match(somatik_psikolojik_maddeler, lam_psi$rhs)])
+loadtab <- data.frame(Item = ord, Cluster = c(rep("Physical",4), rep("Psychological",4)), General = round(lg,3), Gen_p = round(gp,4), Specific = round(ls,3), Spec_p = round(sp,4))
+print(loadtab, row.names = FALSE)
+
+th <- 1 - lg^2 - ls^2
+ECV <- sum(lg^2) / (sum(lg^2) + sum(ls^2))
+IECV <- lg^2 / (lg^2 + ls^2)
+sum_g2 <- (sum(lg))^2
+sum_s2 <- (sum(ls[1:4]))^2 + (sum(ls[5:8]))^2
+sum_th <- sum(th)
+omega_total <- (sum_g2 + sum_s2) / (sum_g2 + sum_s2 + sum_th)
+omega_h <- sum_g2 / (sum_g2 + sum_s2 + sum_th)
+sub_omega <- function(idx){ gg<-(sum(lg[idx]))^2; ss<-(sum(ls[idx]))^2; tt<-sum(th[idx]); c((gg+ss)/(gg+ss+tt), ss/(gg+ss+tt)) }
+os_fiz <- sub_omega(1:4); os_psi <- sub_omega(5:8)
+H_index <- function(l) 1/(1 + 1/sum(l^2/(1-l^2)))
+PUC <- (28 - 12)/28
+
+cat("\n----- Bifactor indices (unweighted) -----\n")
+cat(sprintf("  ECV = %.3f | PUC = %.3f | omega = %.3f | omegaH = %.3f\n", ECV, PUC, omega_total, omega_h))
+cat(sprintf("  omegaHS physical = %.3f | omegaHS psychological = %.3f\n", os_fiz[2], os_psi[2]))
+cat(sprintf("  H general = %.3f | H phys = %.3f | H psych = %.3f\n", H_index(lg), H_index(ls[1:4]), H_index(ls[5:8])))
+cat("\n  Item-level ECV:\n")
+print(data.frame(Item = ord, IECV = round(IECV,3)), row.names = FALSE)
+
+cat("\n>>> Panel C (bifactor MIMIC) stays WEIGHTED, as already run in Part 14.\n")
+cat(">>> Compare these unweighted values against the weighted ones to see how little moves.\n")
