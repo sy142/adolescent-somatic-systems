@@ -4,6 +4,28 @@ library(ggrepel)
 library(reshape2)
 library(ggnewscale)
 library(patchwork)
+library(readxl)
+library(dplyr)
+
+select <- dplyr::select; filter <- dplyr::filter
+
+df <- read_excel("C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/TCA2022_turetilmis_veriseti.xlsx")
+
+analitik_degiskenler <- c("somatik_fiziksel", "somatik_psikolojik", "somatik_genel", "somatik_kategori",
+                          "zorbalik_maruziyet", "okul_aidiyet", "ebeveyn_iliskisi", "BMI_z", "saglikli_beslenme", "sagliksiz_beslenme",
+                          "fiziksel_aktivite_gun", "spor_etkinlik", "kronik_hastalik", "gelir_ordinal", "konut_sorunu", "CINSIYET", "YAS_YIL")
+
+somatik_maddeler <- c("SIKLIK_BAS_AGRI_S", "SIKLIK_KARIN_AGRI_S", "SIKLIK_SIRT_AGRI_S", "SIKLIK_BAS_DONME_S",
+                      "SIKLIK_UZGUN_HISSETME_S", "SIKLIK_SINIRLI_HUYSUZ_S", "SIKLIK_GERGIN_HISSETME_S", "SIKLIK_UYUMADA_GUCLUK_S")
+
+alienation_maddeler <- c("KATILMA_OKUL_DISLANMA_S", "KATILMA_OKUL_YABANCI_S", "KATILMA_OKUL_YALNIZ_S")
+
+tam_set <- unique(c(analitik_degiskenler, somatik_maddeler, alienation_maddeler))
+
+analitik_orneklem <- as.data.frame(df %>% filter(complete.cases(df %>% select(all_of(tam_set)))))
+
+cat("N =", nrow(analitik_orneklem), " (3523 olmali)\n")
+
 
 # Figure 1
 
