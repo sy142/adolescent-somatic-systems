@@ -1995,6 +1995,10 @@ print(round(sort(rf_psi$finalModel$variable.importance, decreasing = TRUE), 4))
 
 cat("=== ML ADIM 5 DUZELTME: PREDICT MATRIS/VEKTOR UYUMU ===\n\n")
 
+xgb_grid <- expand.grid(nrounds = c(150, 300), max_depth = c(2, 3, 4), eta = c(0.03, 0.1),
+                        subsample = c(0.7, 0.9), colsample_bytree = c(0.7, 0.9),
+                        min_child_weight = c(1, 5))
+
 xgb_prob_matrix <- function(fit, x_mat, sinif_isimleri) {
   pr <- predict(fit, xgb.DMatrix(x_mat))
   if (is.matrix(pr)) {
@@ -2106,6 +2110,20 @@ karsilastirma <- rbind(
   cbind(Sonuc = "Psikolojik", Model = "XGBoost", perf_xgb_psi))
 print(karsilastirma, row.names = FALSE)
 
+
+shap_hesapla <- function(xgb_obj, test_df) {
+  x_mat <- model.matrix(reformulate(ml_yordayicilar), data = test_df)[, -1]
+  contrib <- predict(xgb_obj$fit, xgb.DMatrix(x_mat), predcontrib = TRUE)
+  high_idx <- length(xgb_obj$y_levels)
+  sc <- contrib[[high_idx]]
+  sc <- sc[, colnames(sc) != "BIAS", drop = FALSE]
+  list(shap = sc, x = x_mat)
+}
+
+res_shap_fiz <- shap_hesapla(xgb_fiz, test_fiz)
+res_shap_psi <- shap_hesapla(xgb_psi, test_psi)
+shap_fiz <- res_shap_fiz$shap; x_test_fiz <- res_shap_fiz$x
+shap_psi <- res_shap_psi$shap; x_test_psi <- res_shap_psi$x
 
 cat("=== ML ADIM 6 DUZELTME: SUTUN ADI UYUMU ===\n\n")
 
