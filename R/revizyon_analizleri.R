@@ -1035,3 +1035,41 @@ print(data.frame(Item = ord, IECV = round(IECV,3)), row.names = FALSE)
 
 cat("\n>>> Panel C (bifactor MIMIC) stays WEIGHTED, as already run in Part 14.\n")
 cat(">>> Compare these unweighted values against the weighted ones to see how little moves.\n")
+
+
+    cat("\n===== PART 15: TABLE S16 - DESIGN EFFECT SENSITIVITY FOR MIMIC PATH DIFFERENCES =====\n\n")
+
+    # fit_mimic is estimated in PART 1 (unweighted WLSMV MIMIC with formal difference
+    # tests d_k := a_k - b_k). Here we probe how robust the physical-vs-psychological
+    # path differences are to the survey design by inflating the difference SEs under a
+    # range of assumed design effects (DEFF), mirroring the ordinal-model DEFF check in
+    # PART 6 but applied to the latent MIMIC path-difference contrasts.
+
+    ps_s16 <- parameterEstimates(fit_mimic)
+    dd_s16 <- ps_s16[ps_s16$op == ":=", ]
+    dd_s16 <- dd_s16[match(paste0("d", seq_along(X)), dd_s16$label), ]
+
+    deff_diff_tablo <- function(est, se, etiket) {
+      out <- data.frame(
+        Predictor = X_ad,
+        Diff = round(est, 3),
+        Diff_SE = round(se, 3),
+        p_deff1 = round(2 * pnorm(-abs(est / se)), 4),
+        p_deff1.5 = round(2 * pnorm(-abs(est / (se * sqrt(1.5)))), 4),
+        p_deff2 = round(2 * pnorm(-abs(est / (se * sqrt(2.0)))), 4),
+        p_deff3 = round(2 * pnorm(-abs(est / (se * sqrt(3.0)))), 4)
+        )
+      cat(etiket, "\n")
+      print(out, row.names = FALSE)
+      cat("\n")
+      }
+
+    deff_diff_tablo(dd_s16$est, dd_s16$se,
+                    "MIMIC path differences (physical - psychological), p-values under inflated SEs:")
+
+    # Count how many contrasts remain significant at alpha = .05 under each DEFF
+    for (dff in c(1, 1.5, 2, 3)) {
+      p_dff <- 2 * pnorm(-abs(dd_s16$est / (dd_s16$se * sqrt(dff))))
+      cat(" DEFF =", dff, "-> significant path differences (p<.05):",
+          sum(p_dff < 0.05, na.rm = TRUE), "of", length(p_dff), "\n")
+      }
