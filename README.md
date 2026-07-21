@@ -18,21 +18,21 @@ The analysis uses microdata from the 2022 Türkiye Child Survey, which are **not
 publicly available** owing to confidentiality restrictions imposed by the Turkish
 Statistical Institute (TURKSTAT). Researchers wishing to access the data may submit
 a formal application through TURKSTAT's official data access procedures. **No raw or
-individual-level data are included in this repository.** Only aggregate,
-non-identifiable outputs (network weights and category-level coordinates) and
-rendered figures are provided.
+individual-level data are included in this repository.** Only aggregate, non-identifiable outputs 
+(network weights, category-level coordinates, and the Table S16 design-effect sensitivity results) 
+and rendered figures are provided."
 
 ## Repository structure
 
 - R/ — analysis and figure scripts
-- outputs/aggregate/ — aggregate, non-identifiable outputs (safe to share)
+- outputs/aggregate/ — network weights, category-level MCA coordinates, and the Table S16 design-effect sensitivity results (safe to share)
 - outputs/figures/ — rendered figures (PNG/PDF)
 - data/ — empty; the restricted microdata is placed here locally and is not tracked
 
 ## Software and reproducibility
 
 All analyses were performed in R (version 4.5.2). The full list of packages and
-their versions is given in Supplementary Table S12 of the article. Random seeds
+their versions is given in Supplementary Table S21 of the article. Random seeds
 were fixed before all stochastic procedures: a common seed governed the training
 and test partition together with the cross-validation and bootstrap routines, and
 a separate seed governed the latent profile enumeration.
