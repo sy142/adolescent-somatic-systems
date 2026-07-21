@@ -395,17 +395,14 @@ ggsave(paste0(out_dir, "Figure2_forest.pdf"), p,
 
 # Figure 3
 
-
-library(qgraph)
-
 np <- readRDS("C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/Datalar/network_figure3.rds")
-
-W <- np$W; sg <- np$signs; ec <- np$edgecolor; nd <- np$dugumler; p <- ncol(W)
+W <- np$W; sg <- np$signs; ec <- np$edgecolor; nd <- np$dugumler; p_n <- ncol(W)
 
 ag_label <- c("Physical\nsomatic", "Psychological\nsomatic", "Bullying\nexposure",
               "School\nalienation", "Parental\nsupport", "BMI", "Healthy\ndiet",
               "Unhealthy\ndiet", "Physical\nactivity", "Income", "Housing\nproblems",
               "Age", "Sex", "Chronic\ndisease", "Sports\nparticipation")
+
 b_kisa <- c("Phys. somatic", "Psych. somatic", "Bullying", "School alien.",
             "Parent. support", "BMI", "Healthy diet", "Unhealthy diet",
             "Phys. activity", "Income", "Housing", "Age", "Sex", "Chronic dis.", "Sports")
@@ -417,32 +414,36 @@ kat_id <- match(c("CINSIYET","kronik_hastalik","spor_etkinlik"), nd)
 
 sgn <- sg; sgn[is.na(sgn) | sgn == 0] <- 1
 W_plot <- W * sgn
-ecol <- matrix("grey55", p, p)
+
+ecol <- matrix("grey55", p_n, p_n)
 ecol[ec == "darkgreen"] <- "#1F78B4"; ecol[ec == "red"] <- "#E31A1C"
 
 st <- colSums(abs(W))
-vs <- 6 + 4 * (st - min(st)) / (max(st) - min(st))
+vs <- 8 + 4.5 * (st - min(st)) / (max(st) - min(st))
 
-pie_v <- numeric(p)
-for (j in 1:p) {
+pie_v <- numeric(p_n)
+for (j in 1:p_n) {
   r2 <- np$pred$R2[j]; ncc <- np$pred$nCC[j]
   pie_v[j] <- ifelse(!is.na(r2), r2, ifelse(!is.na(ncc), ncc, 0))
 }
 
 bmi_id <- match("BMI_z", nd)
-bagli <- setdiff(1:p, bmi_id)
+bagli <- setdiff(1:p_n, bmi_id)
 Wsub <- W_plot[bagli, bagli]
+
 set.seed(7)
 Lsub <- qgraph(Wsub, layout = "spring", repulsion = 1.1, DoNotPlot = TRUE)$layout
-L <- matrix(NA, p, 2)
+L <- matrix(NA, p_n, 2)
 L[bagli, ] <- Lsub
 L[,1] <- (L[,1] - min(L[bagli,1])) / (max(L[bagli,1]) - min(L[bagli,1])) * 2 - 1
 L[,2] <- (L[,2] - min(L[bagli,2])) / (max(L[bagli,2]) - min(L[bagli,2])) * 2 - 1
 L[,1] <- L[,1] * 1.35
+
 fiz_id <- match("somatik_fiziksel", nd)
 psi_id <- match("somatik_psikolojik", nd)
-L[fiz_id, 1] <- L[fiz_id, 1] - 0.20
-L[psi_id, 1] <- L[psi_id, 1] + 0.20
+L[fiz_id, 1] <- L[fiz_id, 1] - 0.28
+L[psi_id, 1] <- L[psi_id, 1] + 0.28
+
 age_id <- match("YAS_YIL", nd)
 udt_id <- match("sagliksiz_beslenme", nd)
 bully_id <- match("zorbalik_maruziyet", nd)
@@ -451,67 +452,82 @@ L[bully_id, 2] <- L[age_id, 2] + 0.40
 L[bmi_id, 1] <- (L[age_id, 1] + L[udt_id, 1]) / 2
 L[bmi_id, 2] <- (L[age_id, 2] + L[udt_id, 2]) / 2
 
-curve_mat <- matrix(0, p, p)
+curve_mat <- matrix(0, p_n, p_n)
 curve_mat[fiz_id, psi_id] <- -0.6
 curve_mat[psi_id, fiz_id] <- -0.6
+
+lab_cex <- rep(1.15, p_n)
+lab_cex[c(fiz_id, psi_id)] <- 1.05
+lab_cex[match(c("spor_etkinlik", "fiziksel_aktivite_gun", "zorbalik_maruziyet",
+                "konut_sorunu", "saglikli_beslenme", "school_alienation",
+                "parental_support", "kronik_hastalik"), nd)] <- 1.05
 
 es_all <- np$es
 guvenli <- sign(es_all$CIlower) == sign(es_all$CIupper) & es_all$sample != 0
 es_b <- es_all[guvenli, ]
 
 ciz <- function() {
-  layout(matrix(c(1, 2, 3, 3), nrow = 2, byrow = TRUE),
-         widths = c(1.65, 1.5), heights = c(8, 1))
-  par(mar = c(1, 3, 3, 2))
+  layout(matrix(c(1, 2, 3), nrow = 3), heights = c(5.2, 3.5, 0.55))
+
+  eksi <- function(x, d = 2) gsub("-", "\u2212",
+                                  sprintf(paste0("%.", d, "f"), x), fixed = TRUE)
+
+  par(mar = c(1, 2, 2.5, 2))
   qgraph(W_plot, layout = L, labels = ag_label, groups = grp, color = gcol,
-         edge.color = ecol, vsize = vs, label.cex = 1.0, pie = pie_v,
-         pieColor = "grey35", borders = TRUE, border.width = 1.2, legend = FALSE,
-         esize = 12, cut = 0.10, minimum = 0.01, fade = TRUE,
+         edge.color = ecol, vsize = vs, label.cex = lab_cex, label.prop = 0.70,
+         pie = pie_v, pieColor = "grey35", borders = TRUE, border.width = 1.3,
+         legend = FALSE, esize = 12, cut = 0.10, minimum = 0.01, fade = TRUE,
          curve = curve_mat, curveAll = FALSE,
          title = "", rescale = TRUE, aspect = FALSE)
-  mtext("A", side = 3, line = 0.5, adj = 0.02, cex = 1.4, font = 2)
-  
+  mtext("A", side = 3, line = 0.6, adj = 0.01, cex = 1.5, font = 2)
+
   i1 <- match(es_b$node1, nd); i2 <- match(es_b$node2, nd)
-  es_b$lab <- paste(b_kisa[i1], "-", b_kisa[i2])
+  es_b$lab <- paste0(b_kisa[i1], "\u2013", b_kisa[i2])
   iskat <- (i1 %in% kat_id) | (i2 %in% kat_id)
   pcol <- ifelse(iskat, "grey45", ifelse(es_b$sample < 0, "#E31A1C", "#1F78B4"))
   ix <- order(abs(es_b$sample)); es_b <- es_b[ix,]; pcol <- pcol[ix]
   nb <- nrow(es_b)
-  par(mar = c(4, 10.5, 3, 3.5))
+  neg <- es_b$sample < 0
+
+  par(mar = c(4, 12, 2.5, 4.5))
   xt <- seq(-0.3, 0.5, by = 0.1)
   xr <- c(min(xt), max(xt))
   plot(NA, xlim = xr, ylim = c(0.5, nb + 0.5), yaxt = "n", xaxt = "n",
-       xlab = "Edge weight (95% bootstrap CI)", ylab = "", bty = "l")
+       xlab = "Edge weight (95% bootstrap CI)", ylab = "", bty = "l",
+       cex.lab = 1.0)
   abline(v = xt, col = "grey88", lwd = 0.7)
   abline(h = 1:nb, col = "grey92", lwd = 0.7)
   abline(v = 0, lty = 2, col = "grey55", lwd = 1.1)
-  segments(es_b$CIlower, 1:nb, es_b$CIupper, 1:nb, lwd = 2.1, col = pcol)
-  points(es_b$sample, 1:nb, pch = 16, cex = 1.05, col = pcol)
-  text(es_b$CIupper, 1:nb, sprintf("%.2f", es_b$sample),
-       pos = 4, cex = 0.62, col = "grey25", xpd = NA)
-  axis(1, at = xt, labels = sprintf("%.1f", xt), cex.axis = 0.8, gap.axis = 0)
-  axis(2, at = 1:nb, labels = es_b$lab, las = 1, cex.axis = 0.62)
-  mtext("B", side = 3, line = 1, adj = -0.5, cex = 1.4, font = 2)
-  
+  segments(es_b$CIlower, 1:nb, es_b$CIupper, 1:nb, lwd = 2.4, col = pcol)
+  points(es_b$sample, 1:nb, pch = 16, cex = 1.15, col = pcol)
+  text(x = ifelse(neg, es_b$CIlower, es_b$CIupper), y = 1:nb,
+       labels = eksi(es_b$sample, 2),
+       pos = ifelse(neg, 2, 4), cex = 0.75, col = "grey25", xpd = NA)
+  axis(1, at = xt, labels = eksi(xt, 1), cex.axis = 0.9, gap.axis = 0)
+  axis(2, at = 1:nb, labels = es_b$lab, las = 1, cex.axis = 0.78)
+  mtext("B", side = 3, line = 0.6, adj = -0.16, cex = 1.5, font = 2)
+
   par(mar = c(0, 0, 0, 0))
   plot.new()
-  legend(x = 0.40, y = 0.5, xjust = 0.5, yjust = 0.5, ncol = 4, bty = "n", cex = 1.0,
+  legend(x = 0.5, y = 0.55, xjust = 0.5, yjust = 0.5, ncol = 4, bty = "n", cex = 0.95,
          legend = c("Somatic dimensions", "Psychosocial system",
-                    "Biological-demographic", "Lifestyle / SES",
+                    "Biological\u2013demographic", "Lifestyle / SES",
                     "Positive edge", "Negative edge", "Sign undefined (categorical)"),
-         pch = c(rep(21, 4), NA, NA, NA), pt.bg = c(gcol, NA, NA, NA), pt.cex = 2,
+         pch = c(rep(21, 4), NA, NA, NA), pt.bg = c(gcol, NA, NA, NA), pt.cex = 1.8,
          lty = c(rep(NA, 4), 1, 1, 1), lwd = c(rep(NA, 4), 3, 3, 3),
          col = c(rep("black", 4), "#1F78B4", "#E31A1C", "grey55"))
 }
 
 png("C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/Datalar/Figure3_network.png",
-    width = 14, height = 9.5, units = "in", res = 300)
+    width = 7.1, height = 9.2, units = "in", res = 600)
 ciz(); dev.off()
+
 pdf("C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/Datalar/Figure3_network.pdf",
-    width = 14, height = 9.5)
+    width = 7.1, height = 9.2)
 ciz(); dev.off()
+
 cat("B kenar sayisi:", nrow(es_b), "\n")
-cat("Figure3_network.png ve .pdf uretildi (A dar, B genis, eksen -0.3'ten)\n")
+cat("Figure3 revizyon: hub etiketleri kucultuldu, negatif degerler solda\n")
 
 
 # figure s2
