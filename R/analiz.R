@@ -1483,36 +1483,55 @@ cat("N =", nrow(lpa_veri), "\n\n")
 
 set.seed(20260609)
 
-lpa_model1 <- lpa_veri %>%
-  estimate_profiles(1:6, variances = "equal", covariances = "zero")
+# Error-tolerant LPA fitting: tidyLPA can fail to converge for some
+# model x class combinations. guvenli_fit() wraps estimate_profiles() so a
+# failed specification returns NULL instead of aborting the whole script, and
+# tidylpa_temizle() safely extracts the fit indices (returning an empty frame
+# when a model could not be estimated). Results are identical to the direct
+# calls whenever every model converges.
+
+guvenli_fit <- function(veri, n_profil, varyans, kovaryans) {
+  tryCatch(
+    veri %>% estimate_profiles(n_profil, variances = varyans, covariances = kovaryans),
+    error = function(e) { cat("  [uyari] fit basarisiz (", varyans, "/", kovaryans, "):",
+                              conditionMessage(e), "\n"); NULL }
+  )
+}
+
+tidylpa_temizle <- function(fit_nesnesi) {
+  if (is.null(fit_nesnesi)) return(data.frame())
+  tryCatch(
+    get_fit(fit_nesnesi) %>% select(Classes, LogLik, AIC, BIC, SABIC, Entropy, BLRT_p),
+    error = function(e) { cat("  [uyari] get_fit basarisiz:", conditionMessage(e), "\n"); data.frame() }
+  )
+}
+
+lpa_model1 <- guvenli_fit(lpa_veri, 1:6, "equal", "zero")
 cat("--- Model 1: esit varyans, sifir kovaryans (en kisitli, klasik LPA) ---\n")
-print(get_fit(lpa_model1) %>% select(Classes, LogLik, AIC, BIC, SABIC, Entropy, BLRT_p))
+print(tidylpa_temizle(lpa_model1))
 cat("\n")
 
-lpa_model2 <- lpa_veri %>%
-  estimate_profiles(1:6, variances = "varying", covariances = "zero")
+lpa_model2 <- guvenli_fit(lpa_veri, 1:6, "varying", "zero")
 cat("--- Model 2: serbest varyans, sifir kovaryans ---\n")
-print(get_fit(lpa_model2) %>% select(Classes, LogLik, AIC, BIC, SABIC, Entropy, BLRT_p))
+print(tidylpa_temizle(lpa_model2))
 cat("\n")
 
-lpa_model3 <- lpa_veri %>%
-  estimate_profiles(1:6, variances = "equal", covariances = "equal")
+lpa_model3 <- guvenli_fit(lpa_veri, 1:6, "equal", "equal")
 cat("--- Model 3: esit varyans, esit kovaryans ---\n")
-print(get_fit(lpa_model3) %>% select(Classes, LogLik, AIC, BIC, SABIC, Entropy, BLRT_p))
+print(tidylpa_temizle(lpa_model3))
 cat("\n")
 
-lpa_model6 <- lpa_veri %>%
-  estimate_profiles(1:6, variances = "varying", covariances = "varying")
+lpa_model6 <- guvenli_fit(lpa_veri, 1:6, "varying", "varying")
 cat("--- Model 6: serbest varyans, serbest kovaryans (en esnek) ---\n")
-print(get_fit(lpa_model6) %>% select(Classes, LogLik, AIC, BIC, SABIC, Entropy, BLRT_p))
+print(tidylpa_temizle(lpa_model6))
 cat("\n")
 
 cat("=== EN DUSUK BIC OZETI (tum modeller, tum sinif sayilari) ===\n")
 tum_fit <- bind_rows(
-  get_fit(lpa_model1) %>% mutate(VarKov = "equal var, zero cov"),
-  get_fit(lpa_model2) %>% mutate(VarKov = "varying var, zero cov"),
-  get_fit(lpa_model3) %>% mutate(VarKov = "equal var, equal cov"),
-  get_fit(lpa_model6) %>% mutate(VarKov = "varying var, varying cov")
+  tidylpa_temizle(lpa_model1) %>% mutate(VarKov = "equal var, zero cov"),
+  tidylpa_temizle(lpa_model2) %>% mutate(VarKov = "varying var, zero cov"),
+  tidylpa_temizle(lpa_model3) %>% mutate(VarKov = "equal var, equal cov"),
+  tidylpa_temizle(lpa_model6) %>% mutate(VarKov = "varying var, varying cov")
 ) %>% select(VarKov, Classes, BIC, SABIC, Entropy, BLRT_p) %>%
   arrange(BIC)
 print(head(tum_fit, 12))
