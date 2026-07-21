@@ -31,6 +31,9 @@ cat("N =", nrow(analitik_orneklem), " (3523 olmali)\n")
 
 kat <- read.csv("C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/Datalar/mca_kategori_koord.csv",
                 stringsAsFactors = FALSE)
+# NOTE: mca_birey_koord.csv is derived from the restricted TURKSTAT
+# microdata and is not distributed in this repository. The individual
+# cloud in Figure 1 requires microdata access.
 birey <- read.csv("C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/Datalar/mca_birey_koord.csv",
                   stringsAsFactors = FALSE)
 
@@ -505,6 +508,9 @@ cat("N =", nrow(analitik_orneklem), " (3523 olmali)\n")
 
 kat <- read.csv("C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/Datalar/mca_kategori_koord.csv",
                 stringsAsFactors = FALSE)
+# NOTE: mca_birey_koord.csv is derived from the restricted TURKSTAT
+# microdata and is not distributed in this repository. The individual
+# cloud in Figure 1 requires microdata access.
 birey <- read.csv("C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/Datalar/mca_birey_koord.csv",
                   stringsAsFactors = FALSE)
 
