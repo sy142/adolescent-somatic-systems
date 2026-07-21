@@ -1311,6 +1311,9 @@ print(birey_df %>% group_by(somatik) %>%
                   Dim2_ort = round(mean(Dim2), 3)))
 cat("\n")
 
+# NOTE: mca_birey_koord.csv is derived from the restricted TURKSTAT
+# microdata and is not distributed in this repository. The individual
+# cloud in Figure 1 requires microdata access.
 cat("--- Birey bulutu CSV olarak kaydet (figur scripti icin) ---\n")
 write.csv(birey_df,
           "C:/Users/Salim/Desktop/makaleler/Derya TUIK/Ece/Makale/Datalar/mca_birey_koord.csv",
